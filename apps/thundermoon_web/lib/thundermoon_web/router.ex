@@ -43,5 +43,6 @@ defmodule ThundermoonWeb.Router do
     live "/chat", ChatLive, session: [:current_user_id]
     live "/counter", CounterLive, session: [:current_user_id]
     live "/game_of_life", GameOfLifeLive, session: [:current_user_id]
+    live "/lotka_volterra", LotkaVolterraLive, session: [:current_user_id]
   end
 end

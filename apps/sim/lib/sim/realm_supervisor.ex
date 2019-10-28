@@ -24,8 +24,8 @@ defmodule Sim.RealmSupervisor do
         start:
           {Sim.SimulationLoop, :start_link,
            [broadcaster, topic(name), simulation_loop_module(name)]}
-      }
-      # {DynamicSupervisor, name: Thundermoon.DigitSupervisor, strategy: :one_for_one},
+      },
+      {DynamicSupervisor, name: object_supervisor_module(name), strategy: :one_for_one}
     ]
 
     Supervisor.init(children, strategy: :rest_for_one)
@@ -45,5 +45,9 @@ defmodule Sim.RealmSupervisor do
 
   defp supervisor_module(name) do
     Module.concat(name, "RootSupervisor")
+  end
+
+  defp object_supervisor_module(name) do
+    Module.concat(name, "ObjectSupervisor")
   end
 end

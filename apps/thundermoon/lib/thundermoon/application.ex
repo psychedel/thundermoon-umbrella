@@ -14,6 +14,11 @@ defmodule Thundermoon.Application do
         id: Thundermoon.GameOfLife,
         start:
           {Sim.RealmSupervisor, :start_link, [Thundermoon.GameOfLife, ThundermoonWeb.Endpoint]}
+      },
+      %{
+        id: Thundermoon.LotkaVolterra,
+        start:
+          {Sim.RealmSupervisor, :start_link, [Thundermoon.LotkaVolterra, ThundermoonWeb.Endpoint]}
       }
     ]
 
