@@ -12,7 +12,8 @@ defmodule Sim.Realm do
   end
 
   def init({supervisor_module}) do
-    # we don't create the counter immediately as
+    Logger.debug("init sim realm")
+    # we don't create the root immediately as
     # the endpoint pubsub is not started at this point
     {:ok, %{root: nil, supervisor_module: supervisor_module}}
   end

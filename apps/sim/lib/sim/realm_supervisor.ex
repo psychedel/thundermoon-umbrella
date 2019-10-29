@@ -14,16 +14,15 @@ defmodule Sim.RealmSupervisor do
            [
              [
                name: realm_module(name),
-               supervisor_module: supervisor_module(name)
+               supervisor_module: root_supervisor_module(name)
              ]
            ]}
       },
-      {DynamicSupervisor, name: supervisor_module(name), strategy: :one_for_one},
+      {DynamicSupervisor, name: root_supervisor_module(name), strategy: :one_for_one},
+      {Task.Supervisor, name: task_supervisor_module(name)},
       %{
         id: simulation_loop_module(name),
-        start:
-          {Sim.SimulationLoop, :start_link,
-           [broadcaster, topic(name), simulation_loop_module(name)]}
+        start: {Sim.SimulationLoop, :start_link, [broadcaster, topic(name), name]}
       },
       {DynamicSupervisor, name: object_supervisor_module(name), strategy: :one_for_one}
     ]
@@ -35,19 +34,23 @@ defmodule Sim.RealmSupervisor do
     name |> Atom.to_string() |> String.replace_leading("Elixir.", "")
   end
 
-  defp simulation_loop_module(name) do
+  def simulation_loop_module(name) do
     Module.concat(name, "SimulationLoop")
   end
 
-  defp realm_module(name) do
+  def realm_module(name) do
     Module.concat(name, "Realm")
   end
 
-  defp supervisor_module(name) do
+  def root_supervisor_module(name) do
     Module.concat(name, "RootSupervisor")
   end
 
-  defp object_supervisor_module(name) do
+  def object_supervisor_module(name) do
     Module.concat(name, "ObjectSupervisor")
+  end
+
+  def task_supervisor_module(name) do
+    Module.concat(name, "SimTaskSupervisor")
   end
 end
