@@ -5,6 +5,8 @@ defmodule Sim.SimulationLoop do
 
   alias Sim.RealmSupervisor
 
+  # duration between ticks in ms
+  @tick_duration 500
   @max_retries 1
 
   def start_link(broadcaster, topic, name) do
@@ -64,7 +66,7 @@ defmodule Sim.SimulationLoop do
   def handle_info(:tick, %{task_ref: nil, retries: retries} = state)
       when retries <= @max_retries do
     task = Task.Supervisor.async_nolink(state.task_supervisor_module, state.func)
-    next_tick = Process.send_after(self(), :tick, 100)
+    next_tick = Process.send_after(self(), :tick, @tick_duration)
     {:noreply, %{state | next_tick: next_tick, task_ref: task.ref}}
   end
 
