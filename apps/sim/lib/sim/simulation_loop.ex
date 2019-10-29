@@ -5,6 +5,8 @@ defmodule Sim.SimulationLoop do
 
   alias Sim.RealmSupervisor
 
+  @max_retries 1
+
   def start_link(broadcaster, topic, name) do
     GenServer.start_link(__MODULE__, {broadcaster, topic, name},
       name: RealmSupervisor.simulation_loop_module(name)
@@ -59,14 +61,16 @@ defmodule Sim.SimulationLoop do
     {:noreply, state}
   end
 
-  def handle_info(:tick, %{task_ref: nil, retries: retries} = state) when retries <= 3 do
+  def handle_info(:tick, %{task_ref: nil, retries: retries} = state)
+      when retries <= @max_retries do
     task = Task.Supervisor.async_nolink(state.task_supervisor_module, state.func)
     next_tick = Process.send_after(self(), :tick, 100)
     {:noreply, %{state | next_tick: next_tick, task_ref: task.ref}}
   end
 
-  def handle_info(:tick, %{task_ref: nil, retries: retries} = state) when retries > 3 do
-    Logger.warn("more than 3 failed retries, stopping sim loop")
+  def handle_info(:tick, %{task_ref: nil, retries: retries} = state)
+      when retries > @max_retries do
+    Logger.warn("more than #{@max_retries} failed retries, stopping sim loop")
     state.broadcaster.broadcast(state.topic, "sim", %{started: false})
     {:noreply, %{state | next_tick: nil, retries: 0}}
   end

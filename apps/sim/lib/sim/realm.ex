@@ -46,15 +46,14 @@ defmodule Sim.Realm do
     {:reply, :ok, state}
   end
 
-  def handle_info({:DOWN, ref, :process, _pid, _reason}, state) do
-    root =
-      cond do
-        nil == state.root -> nil
-        ref == state.root.ref -> create_root(state)
-        true -> state.root
-      end
-
+  def handle_info({:DOWN, ref, :process, _pid, _reason}, %{root: %{ref: ref}} = state) do
+    root = create_root(state)
     {:noreply, %{state | root: root}}
+  end
+
+  def handle_info({:DOWN, _ref, :process, _pid, _reason}, state) do
+    Logger.warn("got DOWN from unexpected source")
+    {:noreply, state}
   end
 
   defp create_root(state) do
@@ -62,12 +61,17 @@ defmodule Sim.Realm do
 
     child_spec = %{
       id: state.root_module,
-      start: {state.root_module, :start_link, [state.create_args]}
+      start: {state.root_module, :start_link, [state.create_args]},
+      restart: :temporary
     }
 
-    {:ok, pid} = DynamicSupervisor.start_child(state.supervisor_module, child_spec)
+    case DynamicSupervisor.start_child(state.supervisor_module, child_spec) do
+      {:ok, pid} ->
+        %{ref: Process.monitor(pid), pid: pid}
 
-    ref = Process.monitor(pid)
-    %{ref: ref, pid: pid}
+      {:error, _reason} ->
+        Logger.warn("could not start #{state.root_module}")
+        nil
+    end
   end
 end
